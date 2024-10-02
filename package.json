@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@clerk/nextjs": "^5.7.1",
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
+    "@mui/material": "^6.1.1",
+    "firebase": "^10.14.0"
+  }
+}
