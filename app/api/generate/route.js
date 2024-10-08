@@ -1,55 +1,36 @@
-import { FormHelperText } from "@mui/material";
 import { NextResponse } from "next/server";
+import OpenAI from "openai";
 
 const systemPrompt = `
-You are a flashcard creator. 
-Your task is to design effective flashcards by following these principles:
-
-1. Focus on one concept per card.
-2. Keep information concise and clear.
-3. Use active recall by asking questions or prompts.
-4. Incorporate spaced repetition to reinforce memory.
-5. Include a variety of card types (definitions, multiple-choice, true/false).
-6. Provide subtle hints for difficult concepts.
-7. Adjust flashcards based on the learner’s progress and knowledge level.`;
+You are a flashcard creator, you take in text and create multiple flashcards from it. Make sure to create exactly 10 flashcards.
+Both front and back should be one sentence long.
+You should return in the following JSON format:
+{
+  "flashcards":[
+    {
+      "front": "Front of the card",
+      "back": "Back of the card"
+    }
+  ]
+}
+`;
 
 export async function POST(req) {
+  const openai = new OpenAI();
   const data = await req.text();
-  const apiKey = process.env.GEMINI_API_KEY; // Load your API key from .env.local
 
-  try {
-    const response = await fetch("https://api.gemini.com/v1/endpoint", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`, // Add your API key in the headers
-        "Content-Type": "application/json", // Ensure the correct content type is set
-      },
-      body: JSON.stringify({
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt,
-          },
-          {
-            role: "user",
-            content: data,
-          },
-        ],
-      }),
-    });
+  const completion = await openai.chat.completions.create({
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: data },
+    ],
+    model: "gpt-4o-mini",
+    response_format: { type: "json_object" },
+  });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+  // Parse the JSON response from the OpenAI API
+  const flashcards = JSON.parse(completion.choices[0].message.content);
 
-    const flashcard = await response.json(); // Adjust this based on Gemini's API response format
-
-    return NextResponse.json(flashcard.flashcards); // Return the generated flashcard
-  } catch (error) {
-    console.error("Error during Gemini API call:", error);
-    return NextResponse.json(
-      { error: "Failed to generate flashcard" },
-      { status: 500 }
-    );
-  }
+  // Return the flashcards as a JSON response
+  return NextResponse.json(flashcards.flashcards);
 }
