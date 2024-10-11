@@ -10,42 +10,36 @@ export function useFirebaseUser() {
   const [isFirebaseLoading, setIsFirebaseLoading] = useState(true);
 
   useEffect(() => {
-    async function syncUserWithFirebase() {
-      if (isLoaded && isSignedIn && user) {
-        const userRef = doc(db, "users", user.id);
-        const userSnap = await getDoc(userRef);
+    const fetchUserData = async () => {
+      if (isLoaded && isSignedIn) {
+        try {
+          const userDoc = doc(db, "users", user.id);
+          const userSnapshot = await getDoc(userDoc);
 
-        if (!userSnap.exists()) {
-          // User doesn't exist in Firebase, create a new document
-          const newUser = {
-            uid: user.id,
-            email: user.primaryEmailAddress.emailAddress,
-            planType: "free",
-            flashcardSetsGenerated: 0,
-            stripeCustomerId: null,
-            subscriptionId: null,
-            planExpirationDate: null,
-          };
-          await setDoc(userRef, newUser);
-          setFirebaseUser(newUser);
-        } else {
-          // User exists, update the document with the latest Clerk data
-          const existingUser = userSnap.data();
-          const updatedUser = {
-            ...existingUser,
-            email: user.primaryEmailAddress.emailAddress,
-          };
-          await setDoc(userRef, updatedUser, { merge: true });
-          setFirebaseUser(updatedUser);
+          if (userSnapshot.exists()) {
+            setFirebaseUser(userSnapshot.data());
+          } else {
+            // If the user does not exist in Firestore, create a new user
+            const newUser = {
+              uid: user.id,
+              email: user.email,
+              planType: "free",
+              // Add any additional fields needed
+            };
+            await setDoc(userDoc, newUser);
+            setFirebaseUser(newUser);
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          setFirebaseUser(null);
         }
-        setIsFirebaseLoading(false);
-      } else if (isLoaded && !isSignedIn) {
+      } else {
         setFirebaseUser(null);
-        setIsFirebaseLoading(false);
       }
-    }
+      setIsFirebaseLoading(false);
+    };
 
-    syncUserWithFirebase();
+    fetchUserData();
   }, [isLoaded, isSignedIn, user]);
 
   return { firebaseUser, isFirebaseLoading };

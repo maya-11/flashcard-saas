@@ -75,7 +75,7 @@ export default function PricingSection() {
       }
     } catch (error) {
       console.error("Error in handleSubmit:", error);
-      setMessage("An error occurred. Please try again.");
+      setMessage("An error occurred while processing your request. Please try again.");
     } finally {
       setIsLoading(false);
     }

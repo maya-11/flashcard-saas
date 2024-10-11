@@ -2,9 +2,9 @@
 import Footer from "./components/Footer.jsx";
 import Link from "next/link";
 import Image from "next/image";
-
-// PricingSection as a separate client component
 import dynamic from "next/dynamic";
+
+// Import PricingSection as a separate client component
 const PricingSection = dynamic(
   () => import("./components/PricingSection.jsx"),
   {

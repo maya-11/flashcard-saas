@@ -1,23 +1,25 @@
-import { clerkMiddleware } from '@clerk/nextjs/server';
+import { clerkMiddleware } from "@clerk/nextjs/server";
 
-const publicRoutes = ['/', '/sign-in', '/sign-up'];
+// Define public routes that don't require authentication
+const publicRoutes = ["/", "/sign-in", "/sign-up"];
 
 export default clerkMiddleware({
   publicRoutes,
-  ignoredRoutes: ['/((?!api|trpc))(_next.*|.+\\.[\\w]+$)', '/sign-in/SignIn_clerk_catchall_check_1723867424031'],
   afterAuth: (auth, req, evt) => {
-    // Custom behavior after authentication
+    // Redirect to sign-in page if user is not authenticated and tries to access protected routes
     if (!auth.userId && !publicRoutes.includes(req.nextUrl.pathname)) {
-      return new Response(null, { status: 302, headers: { Location: '/sign-in' } });
+      return new Response(null, {
+        status: 302,
+        headers: { Location: "/sign-in" },
+      });
     }
   },
 });
 
+// Matcher config to handle API routes and Next.js internals
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for API routes
-    '/(api|trpc)(.*)',
+    "/((?!_next|static|favicon.ico|.*\\..*).*)", // Match all routes except static files
+    "/api/(.*)", // Always match API routes
   ],
 };
